@@ -293,11 +293,14 @@ void calculate_IMU_error() {
     GyroY = Wire.read() << 8 | Wire.read();
     GyroZ = Wire.read() << 8 | Wire.read();
     // Sum all readings
+    timePrev = time;  // the previous time is stored before the actual time read
+    time = millis();  // actual time read
+    elapsedTime = (time - timePrev) / 1000; 
      if(c>1)
     {
-    GyroErrorX = GyroErrorX + (GyroX / 131.0);
-    GyroErrorY = GyroErrorY + (GyroY / 131.0);
-    GyroErrorZ = GyroErrorZ + (GyroZ / 131.0);
+    GyroErrorX = GyroErrorX + (GyroX / 131.0)* elapsedTime;
+    GyroErrorY = GyroErrorY + (GyroY / 131.0)* elapsedTime;
+    GyroErrorZ = GyroErrorZ + (GyroZ / 131.0)* elapsedTime;
     }
     c++;
     
@@ -312,5 +315,5 @@ void calculate_IMU_error() {
   err[2] = GyroErrorX;
   err[3] = GyroErrorY;
   err[4] =GyroErrorZ;
-}
+}//end of loop void
  
