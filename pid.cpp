@@ -17,9 +17,9 @@ float pid_i_mem_pitch, pid_pitch_setpoint, gyro_pitch_input, pid_output_pitch, p
 float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_yaw_d_error;
 float angle_roll_acc, angle_pitch_acc, angle_pitch, angle_roll, angle_yaw; 
  
- float pid_p_gain_roll = 3;               //Gain setting for the pitch and roll P-controller (default = 1.3).
+ float pid_p_gain_roll = 4.5;               //Gain setting for the pitch and roll P-controller (default = 1.3).
 float pid_i_gain_roll = 0;              //Gain setting for the pitch and roll I-controller (default = 0.04).
-float pid_d_gain_roll = 0;              //Gain setting for the pitch and roll D-controller (default = 18.0).
+float pid_d_gain_roll = 10;              //Gain setting for the pitch and roll D-controller (default = 18.0).
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-).
 
 float pid_p_gain_pitch = pid_p_gain_roll;  //Gain setting for the pitch P-controller.
@@ -27,7 +27,7 @@ float pid_i_gain_pitch = pid_i_gain_roll;  //Gain setting for the pitch I-contro
 float pid_d_gain_pitch = pid_d_gain_roll;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-).
 
-float pid_p_gain_yaw = 4.0;                //Gain setting for the pitch P-controller (default = 4.0).
+float pid_p_gain_yaw = 4.5;                //Gain setting for the pitch P-controller (default = 4.0).
 float pid_i_gain_yaw = 0.02;               //Gain setting for the pitch I-controller (default = 0.02).
 float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller (default = 0.0).
 int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-).
@@ -61,7 +61,7 @@ double ki=0.005;//0.003
 double kd=2.05;//2.05
 ///////////////////////////////////////////////
 
-double throttle=1060; //initial value of throttle to the motors
+double throttle=1260; //initial value of throttle to the motors
 float desired_angle = 0; //This is the angle in which we whant the
                          //balance to stay steady
 int g=0;
@@ -76,6 +76,18 @@ void setup() {
   Wire.write(0);
   Wire.endTransmission(true);
   Serial.begin(115200);
+   Serial.println("Starting..");
+  calculate_IMU_error();
+  
+  right_prop1.attach(6); //attatch the right motor to pin 3
+  right_prop2.attach(10); //attatch the right motor to pin 3
+  left_prop1.attach(5);  //attatch the left motor to pin 5
+  left_prop2.attach(11);  //attatch the left motor to pin 5
+  
+  left_prop1.writeMicroseconds(1000); 
+  left_prop2.writeMicroseconds(1000); 
+  right_prop1.writeMicroseconds(1000);
+  right_prop2.writeMicroseconds(1000);
 
 
   time = millis(); //Start counting time in milliseconds
@@ -83,16 +95,12 @@ void setup() {
    * of PWM to them before connecting the battery. Otherwise
    * the ESCs won't start up or enter in the configure mode.
    * The min value is 1000us and max is 2000us, REMEMBER!*/
-  left_prop1.writeMicroseconds(1000); 
-  left_prop2.writeMicroseconds(1000); 
-  right_prop1.writeMicroseconds(1000);
-  right_prop2.writeMicroseconds(1000);
+ 
   Wire.beginTransmission(0x68);                   //Start communication with the MPU-6050.
   Wire.write(0x6B);                                            //We want to write to the GYRO_CONFIG register (1B hex).
   Wire.write(0x00);                                          //Set the register bits as 00001000 (500dps full scale).
   Wire.endTransmission();
-  Serial.println("Starting..");
-  calculate_IMU_error();
+ 
   Acceleration_angle[0]=0;
   
   
@@ -214,12 +222,6 @@ void loop() {
 /*First calculate the error between the desired angle and 
 *the real measured angle*/
 error_r = Total_angle[1]; 
-Serial.println(":::");//- desired_angle
-Serial.print(Total_angle[1]);//- desired_angle
-Serial.print("/");//- desired_angle
-Serial.print(Gyro_angle[1]);//- desired_angle
-Serial.print("/");//- desired_angle
-Serial.print(Acceleration_angle[1]);//-
 error_p = 0;//Total_angle[1]*1.7 - desired_angle;
 error_y = 0;//Total_angle[2]*1.7 - desired_angle;
     
@@ -294,34 +296,34 @@ to reach the maximum 2000us*/
 /*Finally we calculate the PWM width. We sum the desired throttle and the PID value*/
 esc_1 = throttle + PID4;       //Calculate the pulse for esc 1 (front-right - CCW).
 esc_2 = throttle + PID1 ;       //Calculate the pulse for esc 2 (rear-right - CW).
-esc_3 = 1060;//throttle + PID2  ;     //Calculate the pulse for esc 3 (rear-left - CCW).
-esc_4 = 1060;//throttle + PID3 ;    //Calculate the pulse for esc 4 (front-left - CW).
+esc_3 = throttle + PID2  ;     //Calculate the pulse for esc 3 (rear-left - CCW).
+esc_4 = throttle + PID3 ;    //Calculate the pulse for esc 4 (front-left - CW).
 
 if(esc_1 < 1060){
      esc_1 = 1060;
 }
-if(esc_1 > 1300){
-     esc_1 = 1300;
+if(esc_1 > 1460){
+     esc_1 = 1460;
 }
 
 if(esc_2 < 1060){
      esc_2 = 1060;
 }
-if(esc_2 > 1300){
-     esc_2 = 1300;
+if(esc_2 > 1460){
+     esc_2 = 1460;
 }
 
 if(esc_3 < 1060){
      esc_3 = 1060;
 }
-if(esc_3 > 1300){
-     esc_3 = 1300;
+if(esc_3 > 1460){
+     esc_3 = 1460;
 }
 if(esc_4 < 1060){
      esc_4 = 1060;
 }
-if(esc_4 > 1300){
-     esc_4 = 1300;
+if(esc_4 > 1460){
+     esc_4 = 1460;
 }
 
 /*Finnaly using the servo function we create the PWM pulses with the calculated
@@ -337,6 +339,15 @@ previous_error_y = error_y; //Remember to store the previous error.
 
 
  }
+ Serial.println(":::");//- desired_angle
+Serial.print(Total_angle[1]);//- desired_angle
+Serial.print("/");//- desired_angle
+Serial.print(pid_p_roll);//- desired_angle
+Serial.print("/");//- desired_angle
+Serial.print(esc_1);//-
+Serial.print("/");//- desired_angle
+Serial.print(esc_3);//-
+
 
 }
 
